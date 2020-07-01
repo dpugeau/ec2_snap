@@ -13,4 +13,7 @@ ec2_snap uses the configuration and credential files created by the awscli
 
 ## Running
 
-`pipenv run python code/ec2_snap.py`
+`pipenv run python code/ec2_snap.py <command> <--project-PROJECT>`
+
+*command* is list, start, or stop
+*project* is optional
