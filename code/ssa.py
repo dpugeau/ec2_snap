@@ -18,10 +18,64 @@ def filter_instances(project):
     return instances
 
 @click.group()
-def instances():
+def cli():
+    """ssa manages snapshots"""
+
+@cli.group('snapshots')
+def snapshots():
+    """Commands for snapshots"""
+
+@snapshots.command('list')
+@click.option('--project', default=None,
+    help="Only snapshots for project (tag Project:<name>)")
+def list_snapshots(project):
+    "List EC2 snapshots"
+
+    instances = filter_instances(project)
+
+    for i in instances:
+        for v in i.volumes.all():
+            for s in v.snapshots.all():
+                print(', '.join((
+                    s.id,
+                    v.id,
+                    i.id,
+                    s.state,
+                    s.progress,
+                    s.start_time.strftime('%c')
+                )))
+    return
+
+@cli.group('volume')
+def volume():
+    """Commands for volumes"""
+
+@volume.command('list')
+@click.option('--project', default=None,
+    help="Only volumes for project (tag Project:<name>)")
+def list_volumes(project):
+    "List EC2 volumes"
+
+    instances = filter_instances(project)
+
+    for i in instances:
+        for v in i.volumes.all():
+            print(", ".join((
+                v.id,
+                i.id,
+                v.state,
+                str(v.size) + 'GB',
+                v.volume_type,
+                v.encrypted and "Encrypted" or "Not Encrypted"
+                )))
+    return
+
+   
+@cli.group('instance')
+def instance():
     """Commands for instances"""
 
-@instances.command('list')
+@instance.command('list')
 @click.option('--project', default=None,
     help="Only instances for project (tag Project:<name>)")
 def list_instances(project):
@@ -38,11 +92,12 @@ def list_instances(project):
             i.instance_type,
             i.placement['AvailabilityZone'],
             i.state['Name'],
-            i.public_dns_name,
+            True and i.platform or 'Linux',
+            True and i.public_ip_address or '<no IP>',
             tags.get('Project', "<no project>")))) # use .get to avoid error if no project
     return
 
-@instances.command('stop')
+@instance.command('stop')
 @click.option('--project', default=None,
         help='Only instances for project (tag Project:<name>)')
 def stop_instances(project):
@@ -56,7 +111,7 @@ def stop_instances(project):
 
     return
 
-@instances.command('start')
+@instance.command('start')
 @click.option('--project', default=None,
         help='Only instances for project (tag Project:<name>)')
 def start_instances(project):
@@ -70,5 +125,20 @@ def start_instances(project):
 
     return
 
+@instance.command('snapshot')
+@click.option('--project', default=None,
+        help='Only instances for project (tag Project:<name>)')
+def create_snapshots(project):
+    "Create snapshots for EC2 instances"
+
+    instances = filter_instances(project)
+
+    for i  in instances:
+        for v in i.volumes.all():
+            print('Creating snapshot of {0}'.format(v.id))
+            v.create_snapshot(Description='Created by SnapshotAnalyzer')
+    return
+
+
 if __name__ == '__main__':
-    instances()
+    cli()
