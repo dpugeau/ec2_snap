@@ -26,11 +26,11 @@ def has_pending_snapshot(volume):
 def cli():
     """ssa manages snapshots"""
 
-@cli.group('snapshots')
-def snapshots():
+@cli.group('snapshot')
+def snapshot():
     """Commands for snapshots"""
 
-@snapshots.command('list')
+@snapshot.command('list')
 @click.option('--project', default=None,
     help="Only snapshots for project (tag Project:<name>)")
 @click.option('--all', 'list_all', default=False, is_flag=True,
