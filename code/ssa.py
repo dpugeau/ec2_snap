@@ -1,6 +1,7 @@
 # snapshotanalyzer.py (ssa.py)
 
-import boto3
+import boto3     # provides AWS access
+import botocore  # needed for error checking around starting/stopping instances
 import click
 
 session = boto3.Session(profile_name='boto')
@@ -113,7 +114,11 @@ def stop_instances(project):
 
     for i  in instances:
         print('Stopping {0}...'.format(i.id))
-        i.stop()
+        try:
+            i.stop()
+        except botocore.exception.ClientError as e:
+            print('Could not Stop {0}. '.format(i.id) + str(e))
+            continue
     return
 
 @instance.command('start')
@@ -126,7 +131,11 @@ def start_instances(project):
 
     for i  in instances:
         print('Starting {0}...'.format(i.id))
-        i.start()
+        try:
+            i.start()
+        except botocore.exceptions.ClientError as e:
+            print('Could not start {0}. '.format(i.id) + str(e))
+            continue
     return
 
 @instance.command('snapshot')
