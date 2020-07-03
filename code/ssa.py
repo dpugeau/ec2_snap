@@ -33,6 +33,7 @@ def list_snapshots(project):
 
     instances = filter_instances(project)
 
+    print('Snapshot ID, Volume ID, Instance ID, State, Progress, Start Time')
     for i in instances:
         for v in i.volumes.all():
             for s in v.snapshots.all():
@@ -44,6 +45,7 @@ def list_snapshots(project):
                     s.progress,
                     s.start_time.strftime('%c')
                 )))
+    print('Finished')
     return
 
 @cli.group('volume')
@@ -58,6 +60,7 @@ def list_volumes(project):
 
     instances = filter_instances(project)
 
+    print('Volume ID, Instance ID, State, Size, Type, Encryption')
     for i in instances:
         for v in i.volumes.all():
             print(", ".join((
@@ -68,6 +71,7 @@ def list_volumes(project):
                 v.volume_type,
                 v.encrypted and "Encrypted" or "Not Encrypted"
                 )))
+    print('Finished')
     return
 
    
@@ -84,6 +88,7 @@ def list_instances(project):
 
     instances = filter_instances(project)
 
+    print('Instance ID, Type, AZ, State, Platform, Public IP, Project')
     for i in instances:
         # use a dictionary comprehension to parse the key/value pairs from the i (instance data)
         tags = { t['Key']: t['Value'] for t in i.tags or [] }
@@ -95,6 +100,7 @@ def list_instances(project):
             True and i.platform or 'Linux',
             True and i.public_ip_address or '<no IP>',
             tags.get('Project', "<no project>")))) # use .get to avoid error if no project
+    print('Finished')
     return
 
 @instance.command('stop')
@@ -108,7 +114,6 @@ def stop_instances(project):
     for i  in instances:
         print('Stopping {0}...'.format(i.id))
         i.stop()
-
     return
 
 @instance.command('start')
@@ -122,7 +127,6 @@ def start_instances(project):
     for i  in instances:
         print('Starting {0}...'.format(i.id))
         i.start()
-
     return
 
 @instance.command('snapshot')
@@ -134,9 +138,16 @@ def create_snapshots(project):
     instances = filter_instances(project)
 
     for i  in instances:
+        print('Processing Instance ID: {0}'.format(i.id), ' - Stopping... ')
+        i.stop()
+        i.wait_until_stopped()
         for v in i.volumes.all():
-            print('Creating snapshot of {0}'.format(v.id))
+            print('Starting snapshot of volume ID: {0} ...'.format(v.id))
             v.create_snapshot(Description='Created by SnapshotAnalyzer')
+        print('Starting instance...')
+        i.start()
+        i.wait_until_running()
+    print('Finished')
     return
 
 
