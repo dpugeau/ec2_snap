@@ -1,4 +1,4 @@
-# snapshotanalyzer.py (ssa.py)
+# snapshotcontroller.py (ssc.py)
 
 import boto3     # provides AWS access
 import botocore  # needed for error checking around starting/stopping instances
